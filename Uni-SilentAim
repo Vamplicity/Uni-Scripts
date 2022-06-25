@@ -1,0 +1,82 @@
+local userids = loadstring(game:HttpGet("https://pastebin.com/raw/JzJaPeUY", true))()
+if userids[game.Players.LocalPlayer.UserId] then
+--Whitelisted
+else
+--Not whitelisted
+game.Players.LocalPlayer:Kick("Purchase This Script At Discord.gg/Bum")
+end
+
+
+
+local Lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/bloodball/-back-ups-for-libs/main/dirt",true))()
+local Table = {}
+local window = Lib:CreateWindow("Uni-SilentAim")
+window:Section("Settings")
+window:Button("Inject Uni-SilentAim",function()
+    local Aiming = loadstring(game:HttpGet("https://raw.githubusercontent.com/Vamplicity/uni-silentaim/main/Uni-Silent.txt"))()
+Aiming.TeamCheck(false)
+
+local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local LocalPlayer = Players.LocalPlayer
+local mouse = game.Players.LocalPlayer:GetMouse()
+local CurrentCamera = Workspace.CurrentCamera
+
+local DaHoodSettings = {
+    SilentAim = true,
+    Prediction = 0.14377,
+}
+getgenv().DaHoodSettings = DaHoodSettings
+
+function Aiming.Check()
+    if not (Aiming.Enabled == true and Aiming.Selected ~= LocalPlayer and Aiming.SelectedPart ~= nil) then
+        return false
+    end
+
+    local Character = Aiming.Character(Aiming.Selected)
+    local KOd = Character:WaitForChild("BodyEffects")["K.O"].Value
+    local Grabbed = Character:FindFirstChild("GRABBING_CONSTRAINT") ~= nil
+
+    if (KOd or Grabbed) then
+        return false
+    end
+
+    return true
+end
+
+local __index
+__index = hookmetamethod(game, "__index", function(t, k)
+    if (t:IsA("Mouse") and (k == "Hit" or k == "Target") and Aiming.Check()) then
+        local SelectedPart = Aiming.SelectedPart
+
+        if (DaHoodSettings.SilentAim and (k == "Hit" or k == "Target")) then
+            local Hit = SelectedPart.CFrame + (SelectedPart.Velocity * DaHoodSettings.Prediction)
+
+            return (k == "Hit" and Hit or SelectedPart)
+        end
+    end
+
+    return __index(t, k)
+end)
+
+RunService:BindToRenderStep("AimLock", 0, function()
+    if (DaHoodSettings.AimLock and Aiming.Check() and UserInputService:IsKeyDown(DaHoodSettings.AimLockKeybind)) then
+        local SelectedPart = Aiming.SelectedPart
+
+        local Hit = SelectedPart.CFrame + (SelectedPart.Velocity * DaHoodSettings.Prediction)
+
+        CurrentCamera.CFrame = CFrame.lookAt(CurrentCamera.CFrame.Position, Hit.Position)
+    end
+end)
+end)
+
+window:Slider("SilentAim-Fov",{location = Table, min = 1, max = 60, default = 30, precise = true --[[ 0.00 instead of 0 ]], flag = "Slider"},function(bool)
+    Aiming.FOV = bool
+end)
+
+window:Box("Prediction",{location = Table,flag = "Box", type = "number" --[[ Only Numbers automatically on false ]], hold = "Setting" --[[ PlaceHolderText ]]},function(bool)
+    DaHoodSettings.Prediction = bool
+    end)
